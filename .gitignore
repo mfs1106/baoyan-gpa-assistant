@@ -1,0 +1,29 @@
+# ===== Node.js =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== 构建产物 =====
+dist/
+dist-ssr/
+release-build/
+*.local
+
+# ===== 编辑器 & 系统 =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# ===== 临时 & 调试文件 =====
+_tmp_work/
+*.log
+*.tmp

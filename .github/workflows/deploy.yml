@@ -1,0 +1,59 @@
+name: 构建并部署到 GitHub Pages
+
+on:
+  # 推送到 main 分支时自动部署
+  push:
+    branches: [ main ]
+  # 允许您在仓库 Actions 页面手动点按钮触发部署
+  workflow_dispatch:
+
+# 需要的权限（Pages 专用）
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 只允许一个并发部署，避免多个任务互相覆盖
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # ---------- Job 1: 构建项目 ----------
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建 (tsc && vite build)
+        run: npm run build
+
+      - name: 配置 GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  # ---------- Job 2: 部署 ----------
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
