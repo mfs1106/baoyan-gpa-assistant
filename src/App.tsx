@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ChatWidget } from '@/components/chatbot/ChatWidget';
 import { Dashboard } from '@/pages/Dashboard';
