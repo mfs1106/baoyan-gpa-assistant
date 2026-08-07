@@ -1,4 +1,4 @@
-import { Home, Upload, Calculator, BookOpen, Calendar, TrendingUp, GraduationCap, Award } from 'lucide-react';
+import { Home, Upload, Calculator, BookOpen, Calendar, TrendingUp, GraduationCap, Award, HardDrive } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ const menuItems = [
   { path: '/recommendation', icon: GraduationCap, label: '保研预测' },
   { path: '/ranking', icon: Award, label: '保研排名' },
   { path: '/timetable', icon: Calendar, label: '我的课表' },
+  { path: '/my-files', icon: HardDrive, label: '我的文件' },
 ];
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
@@ -29,7 +30,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         onClick={onToggle}
       />
       <aside
-        className={`fixed left-0 top-16 bottom-0 w-64 bg-gray-50 border-r border-gray-200 z-50 transition-transform md:translate-x-0 md:relative md:top-0 ${
+        className={`fixed left-0 top-16 bottom-0 w-64 bg-gray-50 border-r border-gray-200 z-50 transition-transform overflow-y-auto md:translate-x-0 md:relative md:top-0 md:overflow-visible ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

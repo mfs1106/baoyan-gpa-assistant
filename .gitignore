@@ -11,10 +11,12 @@ dist-ssr/
 release-build/
 *.local
 
-# ===== 编辑器 & 系统 =====
+# ===== IDE & 系统 =====
 .vscode/*
 !.vscode/extensions.json
 .idea/
+# Trae AI 助手的私有项目记忆文件（避免把设计文档传到公共仓库）
+.trae/
 .DS_Store
 *.suo
 *.ntvs*
@@ -22,8 +24,22 @@ release-build/
 *.sln
 *.sw?
 Thumbs.db
+ehthumbs.db
 
 # ===== 临时 & 调试文件 =====
 _tmp_work/
 *.log
 *.tmp
+*.bak
+# 本地调试用测试脚本（不上传仓库）
+test-*.mjs
+test-*.cjs
+test-*.js
+read-doc.ps1
+_patch_*.cjs
+
+# ===== 旧的 zip / 备份压缩包 =====
+*.zip
+*.rar
+*.7z
+*.tar.gz

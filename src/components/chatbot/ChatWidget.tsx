@@ -175,12 +175,12 @@ export function ChatWidget() {
   return (
     <>
       <div
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
+        className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 transition-all duration-300 ${
           isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'
         }`}
       >
         {isOpen ? (
-          <div className="w-96 h-[560px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-slide-up">
+          <div className="w-[calc(100vw-2rem)] h-[75vh] max-w-md sm:w-96 sm:h-[560px] sm:max-w-none bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-slide-up">
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">

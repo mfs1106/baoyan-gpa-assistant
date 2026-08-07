@@ -41,8 +41,12 @@ function getTodayDate() {
  * 导出排名证明
  * @param data 证明数据
  * @param type 证明类型：'major'=专业排名，'direction'=专业方向排名
+ * @returns { blob, filename } 调用方负责触发下载与本地留存
  */
-export async function exportRankingProof(data: ProofData, type: ProofType = 'major') {
+export async function exportRankingProof(
+  data: ProofData,
+  type: ProofType = 'major'
+): Promise<{ blob: Blob; filename: string }> {
   const today = getTodayDate();
   // 第5组：学院+专业（专业排名） 或 学院+专业+专业方向（专业方向排名）
   const collegeMajor = data.direction
@@ -224,14 +228,7 @@ export async function exportRankingProof(data: ProofData, type: ProofType = 'maj
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   });
 
-  // 下载
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
   const filePrefix = type === 'direction' ? '专业方向排名证明' : '专业排名证明';
-  link.download = `${filePrefix}_${data.name}.docx`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  const filename = `${filePrefix}_${data.name}.docx`;
+  return { blob, filename };
 }

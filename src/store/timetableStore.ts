@@ -53,11 +53,24 @@ export const useTimetableStore = create<TimetableStore>()(
     }),
     {
       name: 'timetable-storage',
-      partialize: (state) => ({ 
-        courses: state.courses, 
+      partialize: (state) => ({
+        courses: state.courses,
         semester: state.semester,
         startDate: state.startDate,
+        currentWeek: state.currentWeek,
       }),
+      onRehydrateStorage: () => (state) => {
+        // weekSchedule 不持久化（大数组），rehydrate 时根据 courses 重新计算
+        if (state && state.courses && state.courses.length > 0) {
+          try {
+            state.weekSchedule = parseWeekSchedule(state.courses, state.currentWeek || 1);
+          } catch {
+            state.weekSchedule = Array(8).fill(null).map(() =>
+              Array(7).fill(null).map(() => [])
+            );
+          }
+        }
+      },
     }
   )
 );

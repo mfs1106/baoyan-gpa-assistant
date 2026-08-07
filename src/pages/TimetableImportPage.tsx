@@ -4,6 +4,7 @@ import { Upload, FileText, Check, X, BookOpen, AlertCircle } from 'lucide-react'
 import * as XLSX from 'xlsx';
 import { useTimetableStore } from '@/store/timetableStore';
 import { parseExcelTimetable } from '@/utils/timetableParser';
+import { saveFile } from '@/utils/fileStorage';
 import type { TimetableCourse } from '@/types';
 
 export function TimetableImportPage() {
@@ -48,6 +49,13 @@ export function TimetableImportPage() {
         setParsedCourses(courses);
         setError('');
         setStep('preview');
+        // 本地留存原始课表 Excel，便于二次登录后查看/下载
+        saveFile({
+          name: file.name,
+          category: 'timetable-excel',
+          blob: file,
+          meta: { courseCount: courses.length },
+        }).catch(() => {});
       } catch (err) {
         setError('解析文件失败，请确保文件格式正确');
       }

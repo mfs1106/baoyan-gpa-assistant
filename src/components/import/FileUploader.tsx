@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileX } from 'lucide-react';
 import { parseExcel } from '@/utils/excelParser';
+import { saveFile } from '@/utils/fileStorage';
 import type { ParsedCourse } from '@/types';
 
 interface FileUploaderProps {
@@ -24,6 +25,13 @@ export function FileUploader({ onSuccess }: FileUploaderProps) {
     try {
       const courses = await parseExcel(file);
       onSuccess(courses);
+      // 本地留存原始 Excel，便于二次登录后重新查看/下载，失败不阻断流程
+      saveFile({
+        name: file.name,
+        category: 'grade-excel',
+        blob: file,
+        meta: { courseCount: courses.length },
+      }).catch(() => {});
     } catch (err) {
       setError((err as Error).message);
     } finally {

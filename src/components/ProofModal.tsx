@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { X, FileText, Search, Award, GitBranch } from 'lucide-react';
 import { useRankingStore } from '@/store/rankingStore';
 import { exportRankingProof, type ProofType } from '@/utils/proofExporter';
+import { saveFile } from '@/utils/fileStorage';
 
 interface ProofModalProps {
   onClose: () => void;
@@ -108,7 +109,7 @@ export function ProofModal({ onClose }: ProofModalProps) {
 
     setExporting(true);
     try {
-      await exportRankingProof({
+      const { blob, filename } = await exportRankingProof({
         name: name.trim(),
         studentId: studentId.trim(),
         enrollmentYear: enrollmentYear.trim() || '2023',
@@ -124,6 +125,34 @@ export function ProofModal({ onClose }: ProofModalProps) {
         // 直接用输入框里的落款，用户手动改过就用改过的，实在空再用学院兜底
         signUnit: signUnit.trim() || (college.trim() ? `燕山大学${college.trim()}` : ''),
       }, proofType);
+
+      // 本地留存（IndexedDB），失败不阻断下载
+      saveFile({
+        name: filename,
+        category: 'ranking-proof',
+        blob,
+        meta: {
+          proofType,
+          name: name.trim(),
+          studentId: studentId.trim(),
+          major: major.trim(),
+          direction: proofType === 'direction' ? direction.trim() : undefined,
+          gpa: gpa.trim(),
+          rank: rank.trim(),
+          totalStudents: totalStudents.trim(),
+        },
+      }).catch(() => {});
+
+      // 触发浏览器下载
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
       onClose();
     } catch (err) {
       alert('导出失败：' + (err instanceof Error ? err.message : String(err)));

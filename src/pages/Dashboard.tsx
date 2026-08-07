@@ -81,7 +81,7 @@ export function Dashboard() {
                 setSelectedSemester(e.target.value);
                 setSelectedSchoolYear('');
               }}
-              className="flex-1 min-w-[200px] px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all bg-white"
+              className="w-full sm:flex-1 sm:min-w-[200px] px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all bg-white"
             >
               <option value="">请选择学期</option>
               {semesters.map((semester) => (
@@ -120,7 +120,7 @@ export function Dashboard() {
                 setSelectedSchoolYear(e.target.value);
                 setSelectedSemester('');
               }}
-              className="flex-1 min-w-[200px] px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all bg-white"
+              className="w-full sm:flex-1 sm:min-w-[200px] px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all bg-white"
             >
               <option value="">请选择学年</option>
               {schoolYears.map((year) => (
