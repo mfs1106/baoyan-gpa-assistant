@@ -30,6 +30,10 @@ jobs:
         run: npm ci
       - name: Build app
         run: npm run build
+        env:
+          # Publishable key 会随前端发送给浏览器；切勿在此放入 service_role 或数据库密码。
+          VITE_SUPABASE_URL: https://umqzidtvjinjdeyensgi.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_0aAiXPrTn-r_3yDmDt8cRw_pRcKEqjj
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
