@@ -35,8 +35,12 @@ export function MyFilesPage() {
     load();
   };
 
-  const handleDownload = (file: StoredFile) => {
-    downloadStoredFile(file);
+  const handleDownload = async (file: StoredFile) => {
+    try {
+      await downloadStoredFile(file);
+    } catch {
+      window.alert('下载失败，请检查网络后重试。');
+    }
   };
 
   const formatSize = (bytes: number) => {

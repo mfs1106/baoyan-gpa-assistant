@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import type { Session } from '@supabase/supabase-js';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { ChatWidget } from '@/components/chatbot/ChatWidget';
@@ -13,15 +14,53 @@ import { GradeAnalysisPage } from '@/pages/GradeAnalysisPage';
 import { RecommendationPage } from '@/pages/RecommendationPage';
 import { RankingPage } from '@/pages/RankingPage';
 import { MyFilesPage } from '@/pages/MyFilesPage';
+import { AuthPage } from '@/components/auth/AuthPage';
+import { CloudDataSync } from '@/components/auth/CloudDataSync';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { saveCloudSnapshot } from '@/services/cloudSync';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase || !hasSupabaseConfig) {
+      setAuthLoading(false);
+      return;
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthLoading(false);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    if (!supabase || !session) return;
+    try {
+      await saveCloudSnapshot(session.user.id);
+    } catch {
+      // 网络异常时仍允许退出；本地缓存会在下一次登录时继续保留。
+    }
+    await supabase.auth.signOut();
+  };
+
+  if (authLoading) return <div className="min-h-screen bg-gray-50" />;
+  if (!session) return <AuthPage />;
 
   return (
+    <CloudDataSync user={session.user}>
     <Router>
       <Header
         isSidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        userEmail={session.user.email}
+        onSignOut={handleSignOut}
       />
       <div className="flex pt-16">
         <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(false)} />
@@ -44,6 +83,7 @@ function App() {
       </div>
       <ChatWidget />
     </Router>
+    </CloudDataSync>
   );
 }
 
