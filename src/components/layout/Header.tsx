@@ -29,12 +29,18 @@ export function Header({ onToggleSidebar, isSidebarOpen, userEmail, onSignOut }:
           </div>
         </div>
         {userEmail && onSignOut && (
-          <button onClick={onSignOut} title="退出登录" className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
-            <span className="max-w-40 truncate">{userEmail}</span>
-            <LogOut size={17} />
-          </button>
+          <>
+            <button onClick={onSignOut} title="退出登录" aria-label="退出登录" className="flex sm:hidden items-center justify-center p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
+              <LogOut size={21} />
+            </button>
+            <button onClick={onSignOut} title="退出登录" className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
+              <span className="max-w-40 truncate">{userEmail}</span>
+              <LogOut size={17} />
+            </button>
+          </>
         )}
       </div>
     </header>
   );
 }
+
