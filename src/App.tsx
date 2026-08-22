@@ -15,6 +15,7 @@ import { RecommendationPage } from '@/pages/RecommendationPage';
 import { RankingPage } from '@/pages/RankingPage';
 import { MyFilesPage } from '@/pages/MyFilesPage';
 import { AuthPage } from '@/components/auth/AuthPage';
+import { ResetPasswordPage } from '@/components/auth/ResetPasswordPage';
 import { CloudDataSync } from '@/components/auth/CloudDataSync';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 import { saveCloudSnapshot } from '@/services/cloudSync';
@@ -23,6 +24,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
     if (!supabase || !hasSupabaseConfig) {
@@ -33,8 +35,9 @@ function App() {
       setSession(data.session);
       setAuthLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
       setAuthLoading(false);
     });
     return () => listener.subscription.unsubscribe();
@@ -50,8 +53,14 @@ function App() {
     await supabase.auth.signOut();
   };
 
+  const handlePasswordRecoveryComplete = async () => {
+    setPasswordRecovery(false);
+    await supabase?.auth.signOut();
+  };
+
   if (authLoading) return <div className="min-h-screen bg-gray-50" />;
-  if (!session) return <AuthPage />;
+  if (passwordRecovery && session) return <ResetPasswordPage onReturnToLogin={handlePasswordRecoveryComplete} />;
+  if (!session) return <AuthPage onPasswordRecoveryVerified={() => setPasswordRecovery(true)} />;
 
   return (
     <CloudDataSync user={session.user}>
@@ -88,3 +97,4 @@ function App() {
 }
 
 export default App;
+
