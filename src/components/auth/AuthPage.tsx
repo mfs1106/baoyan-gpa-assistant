@@ -68,12 +68,20 @@ export function AuthPage({ onPasswordRecoveryVerified }: AuthPageProps) {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        const { error: signUpError } = await supabase!.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase!.auth.signUp({
           email: email.trim(),
           password,
           options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
         });
         if (signUpError) throw signUpError;
+        // 启用邮箱确认时，Supabase 会对已存在的邮箱返回“伪成功”用户，
+        // 且不会发送新验证码，以避免服务端暴露邮箱是否已注册。
+        if (signUpData.user?.identities?.length === 0) {
+          setPassword('');
+          setConfirmPassword('');
+          setError('该邮箱无法继续注册。若此前已注册，请直接登录；忘记密码可使用下方“忘记密码？”入口。');
+          return;
+        }
         setSignupStep('verify');
         setResendCooldown(60);
         setMessage(`验证码已发送至 ${email.trim()}。请输入邮件中的验证码完成注册。`);
