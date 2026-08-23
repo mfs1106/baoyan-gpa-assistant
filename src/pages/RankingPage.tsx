@@ -315,61 +315,51 @@ export function RankingPage() {
       return;
     }
 
-    const majorLabel = selectedMajor === 'all' ? '全部专业' : selectedMajor;
-    const directionLabel = selectedDirection === 'all' ? '全部方向' : selectedDirection;
     const dateStr = new Date().toLocaleDateString('zh-CN');
 
-    const rankBg: Record<number, string> = {
-      0: '#FFF9C4',
-      1: '#E0E0E0',
-      2: '#FFCCBC',
-    };
+    const escapeHtml = (value: string | number) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
 
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
     html += `<head><meta charset="UTF-8"><style>`;
-    html += `td,th{font-family:微软雅黑;font-size:10pt;text-align:center;border:0.5pt solid #E5E7EB;}`;
-    html += `table{border-collapse:collapse;}`;
+    html += `td,th{font-family:SimSun,宋体,serif;font-size:9pt;text-align:center;vertical-align:middle;border:0.5pt solid #000000;mso-number-format:\\@;}`;
+    html += `table{border-collapse:collapse;table-layout:fixed;}`;
     html += `</style></head><body>`;
-    html += `<table cellspacing="0" cellpadding="4" style="width:100%;">`;
+    html += `<table cellspacing="0" cellpadding="3">`;
 
-    // 标题行
-    html += `<tr><td colspan="10" style="font-size:18pt;font-weight:bold;color:#FFFFFF;background:#4F46E5;height:38pt;text-align:center;">保研排名预测表</td></tr>`;
-    // 副标题行
-    html += `<tr><td colspan="10" style="font-size:10pt;color:#666666;background:#F3F4F6;height:24pt;text-align:center;">筛选范围：${majorLabel} · ${directionLabel}　　导出日期：${dateStr}　　共 ${filteredStudents.length} 人</td></tr>`;
-    // 空行
-    html += `<tr><td colspan="10" style="height:8pt;border:none;"></td></tr>`;
+    // 与用户提供的教务成绩表模板一致：空两行、标题行、空一行、普通表头。
+    html += `<tr><td colspan="12" style="height:14pt;border:none;"></td></tr>`;
+    html += `<tr><td colspan="12" style="height:14pt;border:none;"></td></tr>`;
+    html += `<tr><td colspan="12" style="font-size:15pt;font-weight:bold;height:24pt;border:none;">燕山大学学生综合排名与成绩</td></tr>`;
+    html += `<tr><td colspan="12" style="height:14pt;border:none;"></td></tr>`;
 
-    // 表头
-    const headers = ['排名', '学号', '姓名', '学院', '专业', '专业方向', '班级', '裸绩', '加分', '最终GPA'];
+    const headers = ['序号', '学号', '姓名', '学院', '专业', '专业方向', '班级', '原始名次', '平均学分绩点', '加分', '综合绩点', '综合排名'];
     html += `<tr>`;
     headers.forEach((h) => {
-      html += `<th style="font-size:11pt;font-weight:bold;color:#FFFFFF;background:#6366F1;height:28pt;">${h}</th>`;
+      html += `<th style="font-weight:normal;height:24pt;white-space:normal;">${h}</th>`;
     });
     html += `</tr>`;
 
-    // 数据行
     filteredStudents.forEach((s, idx) => {
-      const bg = idx < 3 && rankBg[idx] ? rankBg[idx] : (idx % 2 === 0 ? '#FFFFFF' : '#F9FAFB');
-      const rankStyle = idx < 3 ? 'font-weight:bold;font-size:11pt;' : '';
-      const bonusStyle = s.bonusScore > 0 ? 'font-weight:bold;color:#D97706;' : '';
-      const finalStyle = 'font-weight:bold;color:#4F46E5;';
-
       html += `<tr>`;
-      html += `<td style="background:${bg};${rankStyle}">${idx + 1}</td>`;
-      html += `<td style="background:${bg};">${s.studentId}</td>`;
-      html += `<td style="background:${bg};">${s.name}</td>`;
-      html += `<td style="background:${bg};">${s.college}</td>`;
-      html += `<td style="background:${bg};">${s.major}</td>`;
-      html += `<td style="background:${bg};">${s.direction}</td>`;
-      html += `<td style="background:${bg};">${s.class}</td>`;
-      html += `<td style="background:${bg};">${s.rawGPA.toFixed(3)}</td>`;
-      html += `<td style="background:${bg};${bonusStyle}">${s.bonusScore > 0 ? '+' + s.bonusScore.toFixed(3) : '0.000'}</td>`;
-      html += `<td style="background:${bg};${finalStyle}">${s.finalGPA.toFixed(3)}</td>`;
+      html += `<td>${idx + 1}</td>`;
+      html += `<td>${escapeHtml(s.studentId)}</td>`;
+      html += `<td>${escapeHtml(s.name)}</td>`;
+      html += `<td>${escapeHtml(s.college)}</td>`;
+      html += `<td>${escapeHtml(s.major)}</td>`;
+      html += `<td>${escapeHtml(s.direction)}</td>`;
+      html += `<td>${escapeHtml(s.class)}</td>`;
+      html += `<td>${s.originalRank || ''}</td>`;
+      html += `<td>${s.rawGPA.toFixed(3)}</td>`;
+      html += `<td>${s.bonusScore.toFixed(3)}</td>`;
+      html += `<td>${s.finalGPA.toFixed(3)}</td>`;
+      html += `<td>${idx + 1}</td>`;
       html += `</tr>`;
     });
-
-    // 底部说明
-    html += `<tr><td colspan="10" style="font-size:9pt;font-style:italic;color:#9CA3AF;text-align:left;border:none;height:20pt;">说明：最终GPA = 裸绩（平均学分绩点）+ 竞赛加分（最高0.5）。排名按最终GPA从高到低排序。</td></tr>`;
 
     html += `</table></body></html>`;
 
@@ -377,7 +367,7 @@ export function RankingPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `保研排名预测_${majorLabel}_${directionLabel}_${dateStr.replace(/\//g, '-')}.xls`;
+    a.download = `保研综合排名与成绩_${dateStr.replace(/\//g, '-')}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -704,3 +694,4 @@ export function RankingPage() {
     </div>
   );
 }
+
