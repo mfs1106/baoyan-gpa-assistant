@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, Loader2, ChevronRight, HelpCircle, FileText, Award, BookOpen, Server, Zap } from 'lucide-react';
 import { findBestMatch, findTopMatches, getSuggestionQuestions, MatchResult } from '@/utils/faqMatcher';
 import { getAllCategories } from '@/data/faqData';
+import { askAiAssistant } from '@/services/aiAssistant';
 
 interface ChatMessage {
   id: string;
@@ -10,6 +11,7 @@ interface ChatMessage {
   time: Date;
   suggestions?: string[];
   matchedItem?: MatchResult;
+  source?: 'ai' | 'local';
 }
 
 export function ChatWidget() {
@@ -66,48 +68,54 @@ export function ChatWidget() {
     setInput('');
     setIsTyping(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 600));
-
     const bestMatch = findBestMatch(text);
     const topMatches = findTopMatches(text, 3);
 
-    if (bestMatch && bestMatch.score >= 5) {
-      const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: bestMatch.item.answer,
-        time: new Date(),
-        matchedItem: bestMatch,
-        suggestions: topMatches
-          .filter((m) => m.item.id !== bestMatch.item.id)
-          .map((m) => m.item.question),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } else if (topMatches.length > 0) {
-      const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `我不太确定你的问题，以下是一些可能相关的内容：\n\n${topMatches
-          .map((m, i) => `${i + 1}. ${m.item.question}\n${m.item.answer}`)
-          .join('\n\n')}\n\n你可以点击上面的问题查看详情，或换一种方式描述你的问题。`,
-        time: new Date(),
-        matchedItem: topMatches[0],
-        suggestions: topMatches.map((m) => m.item.question),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } else {
-      const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content:
-          '抱歉，我没有找到相关答案 😅\n\n你可以：\n1. 试试换一种方式描述问题\n2. 查看下面的常见问题分类\n3. 联系开发人员获取帮助',
-        time: new Date(),
-        suggestions: getSuggestionQuestions().slice(0, 4),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+    try {
+      const history = messages
+        .filter((message) => message.id !== 'welcome')
+        .slice(-6)
+        .map((message) => ({
+          role: message.type === 'user' ? 'user' as const : 'assistant' as const,
+          content: message.content,
+        }));
+      const answer = await askAiAssistant(text, history);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-ai`,
+          type: 'assistant',
+          content: answer,
+          time: new Date(),
+          source: 'ai',
+          suggestions: topMatches.slice(0, 3).map((match) => match.item.question),
+        },
+      ]);
+    } catch {
+      const fallbackContent = bestMatch && bestMatch.score >= 5
+        ? `AI 服务暂时不可用，先为你提供内置说明：\n\n${bestMatch.item.answer}`
+        : topMatches.length > 0
+          ? `AI 服务暂时不可用。以下是可能相关的内置说明：\n\n${topMatches
+              .map((match, index) => `${index + 1}. ${match.item.question}\n${match.item.answer}`)
+              .join('\n\n')}`
+          : 'AI 服务暂时不可用。你可以换一种方式描述网站功能问题，或从下方分类中选择问题。';
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-local`,
+          type: 'assistant',
+          content: fallbackContent,
+          time: new Date(),
+          source: 'local',
+          matchedItem: bestMatch || undefined,
+          suggestions: topMatches.length > 0
+            ? topMatches.map((match) => match.item.question)
+            : getSuggestionQuestions().slice(0, 4),
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
     }
-
-    setIsTyping(false);
   };
 
   const handleSuggestionClick = (question: string) => {
@@ -188,8 +196,8 @@ export function ChatWidget() {
                   <Sparkles className="text-white" size={22} />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">教务助手</p>
-                  <p className="text-xs text-white/80">在线 · 随时为你服务</p>
+                  <p className="font-semibold text-white">AI 功能助手</p>
+                  <p className="text-xs text-white/80">仅解答网站功能与操作方法</p>
                 </div>
               </div>
               <button
@@ -220,6 +228,9 @@ export function ChatWidget() {
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {msg.source === 'ai' && (
+                      <p className="text-[10px] mt-1.5 text-indigo-400">AI 功能问答</p>
+                    )}
                     {msg.matchedItem && (
                       <p className="text-xs mt-1 opacity-60">
                         💡 匹配度: {Math.round((msg.matchedItem.score / 30) * 100)}%
@@ -313,7 +324,7 @@ export function ChatWidget() {
                 </button>
               </div>
               <p className="text-[10px] text-gray-300 text-center mt-2">
-                本助手基于系统内置知识库，不涉及数据操作
+                AI 仅解答网站功能，不会读取你的课程、成绩、排名或文件
               </p>
             </div>
           </div>
@@ -340,3 +351,4 @@ export function ChatWidget() {
     </>
   );
 }
+
