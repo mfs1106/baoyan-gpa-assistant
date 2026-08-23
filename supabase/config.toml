@@ -1,0 +1,3 @@
+[functions.ai-assistant]
+verify_jwt = true
+
