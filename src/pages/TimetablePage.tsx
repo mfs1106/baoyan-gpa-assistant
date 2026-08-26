@@ -43,6 +43,19 @@ export function TimetablePage() {
   };
 
   const sections = ['1-2节', '3-4节', '5-6节', '7-8节', '9-10节', '11-12节', '13-14节'];
+  const periods = Array.from({ length: 14 }, (_, index) => index + 1);
+
+  const getWeekDayDate = (day: number) => {
+    if (!startDate) return null;
+    const date = new Date(getWeekStartDate(startDate, currentWeek));
+    date.setDate(date.getDate() + day - 1);
+    return date;
+  };
+
+  const getSectionStart = (section: string) => {
+    const match = section.match(/\d+/);
+    return match ? Number(match[0]) : 1;
+  };
 
   const getSelectedDaySchedule = () => {
     return getDaySchedule(courses, startDate, selectedDay);
@@ -192,8 +205,8 @@ export function TimetablePage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6">
           <div className="flex bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setView('week')}
@@ -221,7 +234,7 @@ export function TimetablePage() {
           
           <button
             onClick={() => navigate('/timetable-import')}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="self-end sm:self-auto flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <Upload size={18} />
             重新导入
@@ -267,7 +280,83 @@ export function TimetablePage() {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* 手机端使用教务系统常见的节次网格，而不是横向滚动的大卡片。 */}
+            <div className="md:hidden rounded-xl border border-slate-200 overflow-hidden bg-white">
+              <div className="grid grid-cols-[34px_repeat(7,minmax(0,1fr))] border-b border-slate-200 bg-slate-50">
+                <div className="border-r border-slate-200" />
+                {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                  const weekDayDate = getWeekDayDate(day);
+                  const isTodayCell = weekDayDate && isToday(weekDayDate);
+                  return (
+                    <div
+                      key={day}
+                      className={`min-w-0 py-2 text-center border-r last:border-r-0 border-slate-200 ${
+                        isTodayCell ? 'bg-primary-50 text-primary-700' : 'text-slate-700'
+                      }`}
+                    >
+                      <div className="text-[11px] leading-none text-slate-500">
+                        {weekDayDate ? `${weekDayDate.getMonth() + 1}.${String(weekDayDate.getDate()).padStart(2, '0')}` : ''}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold leading-none">{getShortDayLabel(day)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className="grid grid-cols-[34px_repeat(7,minmax(0,1fr))] relative"
+                style={{ gridTemplateRows: 'repeat(14, minmax(42px, auto))' }}
+              >
+                {periods.map((period) => (
+                  <div
+                    key={`period-${period}`}
+                    className="col-start-1 flex items-start justify-center pt-2 text-[11px] text-slate-400 border-r border-b border-slate-200 bg-slate-50"
+                    style={{ gridRow: period }}
+                  >
+                    {period}
+                  </div>
+                ))}
+
+                {periods.flatMap((period) => [1, 2, 3, 4, 5, 6, 7].map((day) => {
+                  const weekDayDate = getWeekDayDate(day);
+                  return (
+                    <div
+                      key={`cell-${period}-${day}`}
+                      className={`border-r border-b border-slate-200 last:border-r-0 ${
+                        weekDayDate && isToday(weekDayDate) ? 'bg-primary-50/40' : 'bg-white'
+                      }`}
+                      style={{ gridColumn: day + 1, gridRow: period }}
+                    />
+                  );
+                }))}
+
+                {filterCoursesByWeek(courses, currentWeek).map((course, index) => {
+                  const start = getSectionStart(course.section);
+                  return (
+                    <div
+                      key={course.id}
+                      className={`z-10 m-0.5 rounded-md px-1 py-1 text-[10px] leading-tight shadow-sm overflow-hidden ${
+                        index % 2 === 0
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-violet-100 text-violet-800'
+                      }`}
+                      style={{
+                        gridColumn: course.dayOfWeek + 1,
+                        gridRow: `${start} / span 2`,
+                      }}
+                      title={`${course.name}\n${course.teacher}\n${course.classroom}`}
+                    >
+                      <div className="font-semibold break-words">{course.name}</div>
+                      {course.classroom && (
+                        <div className="mt-0.5 opacity-75 break-all">{course.classroom}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50">
                   <tr>
@@ -506,3 +595,4 @@ export function TimetablePage() {
     </div>
   );
 }
+
